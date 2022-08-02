@@ -37,7 +37,6 @@
 
     var currentLocation; // String: Current page URL
     var changedDescription; // Bool: Changed description
-    var alreadyChanged; // List(string): Links already changed
 
     function getVideoID(a)
     {
@@ -54,7 +53,6 @@
         console.log(" --- Page Change detected! --- ");
         currentLocation = document.title;
         changedDescription = false;
-        alreadyChanged = [];
     }
     resetChanged();
 
@@ -66,17 +64,30 @@
         }
 
         // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
-        var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
+        var links = Array.prototype.slice.call(document.getElementsByTagName("yt-formatted-string")).filter( a => {
             return (a.id == 'video-title' || a.id == 'video-title-link')
-            && !a.className.includes("ytd-video-preview") && alreadyChanged.indexOf(a) == -1;
+            && !a.className.includes("ytd-video-preview") && cachedTitles[getVideoID(a)] !== a.innerText.trim();
         } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
             return (a.id == 'video-title' || a.id == 'video-title-link')
             && !a.className.includes("-radio-")
             && !a.className.includes("-playlist-")
-            && alreadyChanged.indexOf(a) == -1;
+            && cachedTitles[getVideoID(a)] !== a.innerText.trim();
         } );
         links = links.concat(spans).slice(0,30);
+
+        // change title from cachedTitles
+        for(var i=0 ; i < links.length ; i++){
+            var curCachedTitle = cachedTitles[getVideoID(links[i])];
+            if (curCachedTitle !== undefined) {
+                var displayTitle = links[i].innerText.trim();
+                if(displayTitle != curCachedTitle.replace(/\s{2,}/g, ' '))
+                {
+                    console.log ("'" + displayTitle + "' --> '" + curCachedTitle + "'");
+                    links[i].innerText = curCachedTitle;
+                }
+            }
+        }
 
         // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";
@@ -149,7 +160,6 @@
                                     console.log ("'" + displayTitle + "' --> '" + originalTitle + "'");
                                     links[i].innerText = originalTitle;
                                 }
-                                alreadyChanged.push(links[i]);
                             }
                         }
                     }
