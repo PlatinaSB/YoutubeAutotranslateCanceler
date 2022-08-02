@@ -77,6 +77,7 @@
         links = links.concat(spans).slice(0,30);
 
         // change title from cachedTitles
+        var needReqLinks = [];
         for(var i=0 ; i < links.length ; i++){
             var curCachedTitle = cachedTitles[getVideoID(links[i])];
             if (curCachedTitle !== undefined) {
@@ -86,8 +87,11 @@
                     console.log ("'" + displayTitle + "' --> '" + curCachedTitle + "'");
                     links[i].innerText = curCachedTitle;
                 }
+            } else {
+                needReqLinks.push(links[i]);
             }
         }
+        links = needReqLinks;
 
         // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";
