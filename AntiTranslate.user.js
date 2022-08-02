@@ -62,7 +62,6 @@
         if(currentLocation !== document.title) resetChanged();
 
         if (NO_API_KEY) {
-            console.log("no api key")
             return;
         }
 
@@ -109,12 +108,12 @@
                         data = data.items;
                         if (mainVidID != "") {
                             // MAIN TITLE
-                            var nativeTitle = data[0].snippet.title;
-                            document.title = nativeTitle + " - YouTube";
+                            var nativeMainTitle = data[0].snippet.title;
+                            document.title = nativeMainTitle + " - YouTube";
                             var pageTitle = document.getElementsByClassName("title style-scope ytd-video-primary-info-renderer");
-                            if (pageTitle.length > 0 && pageTitle[0] !== undefined && nativeTitle != null && pageTitle[0].innerText != nativeTitle) {
-                                    console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + nativeTitle + "'");
-                                    pageTitle[0].innerText = nativeTitle;
+                            if (pageTitle.length > 0 && pageTitle[0] !== undefined && nativeMainTitle != null && pageTitle[0].innerText != nativeMainTitle) {
+                                    console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + nativeMainTitle + "'");
+                                    pageTitle[0].innerText = nativeMainTitle;
                             }
                             // Replace Main Video Description
                             var videoDescription = data[0].snippet.description;
@@ -144,10 +143,10 @@
                             if (cachedTitles[curID] !== undefined)
                             {
                                 var originalTitle = cachedTitles[curID];
-                                var pageTitle = links[i].innerText.trim();
-                                if(pageTitle != originalTitle.replace(/\s{2,}/g, ' '))
+                                var displayTitle = links[i].innerText.trim();
+                                if(displayTitle != originalTitle.replace(/\s{2,}/g, ' '))
                                 {
-                                    console.log ("'" + pageTitle + "' --> '" + originalTitle + "'");
+                                    console.log ("'" + displayTitle + "' --> '" + originalTitle + "'");
                                     links[i].innerText = originalTitle;
                                 }
                                 alreadyChanged.push(links[i]);
