@@ -21,15 +21,15 @@
     if(api_key_awaited === undefined || api_key_awaited === null || api_key_awaited === ""){
         await GM.setValue("api_key", prompt("Enter your API key. Go to https://developers.google.com/youtube/v3/getting-started to know how to obtain an API key, then go to https://console.developers.google.com/apis/api/youtube.googleapis.com/ in order to enable Youtube Data API for your key."));
     }
-  
-    var api_key_awaited = await GM.getValue("api_key");
+
+    api_key_awaited = await GM.getValue("api_key");
     if(api_key_awaited === undefined || api_key_awaited === null || api_key_awaited === ""){
         NO_API_KEY = true; // Resets after page reload, still allows local title to be replaced
         console.log("NO API KEY PRESENT");
     }
     const API_KEY = await GM.getValue("api_key");
     var API_KEY_VALID = false;
-		console.log(API_KEY);
+		//console.log(API_KEY);
 
     var url_template = "https://www.googleapis.com/youtube/v3/videos?part=snippet&id={IDs}&key=" + API_KEY;
 
@@ -46,6 +46,7 @@
         }
         var href = a.href;
         var tmp = href.split('v=')[1];
+        tmp = tmp == null ? href.split('/shorts/')[1] : tmp;
         return tmp.split('&')[0];
     }
 
@@ -60,37 +61,25 @@
     function changeTitles(){
         if(currentLocation !== document.title) resetChanged();
 
-        // MAIN TITLE - no API key required
-        if (window.location.href.includes ("/watch")){
-            var titleMatch = document.title.match (/^(?:\([0-9]+\) )?(.*?)(?: - YouTube)$/); // ("(n) ") + "TITLE - YouTube"
-            var pageTitle = document.getElementsByClassName("title style-scope ytd-video-primary-info-renderer");
-            if (pageTitle.length > 0 && pageTitle[0] !== undefined && titleMatch != null) {
-                if (pageTitle[0].innerText != titleMatch[1]){
-                    console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + titleMatch[1] + "'");
-                    pageTitle[0].innerText = titleMatch[1];
-                }
-            }
-        }
-
         if (NO_API_KEY) {
+            console.log("no api key")
             return;
         }
 
-        var APIcallIDs;
-
         // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
         var links = Array.prototype.slice.call(document.getElementsByTagName("a")).filter( a => {
-            return a.id == 'video-title' && alreadyChanged.indexOf(a) == -1;
+            return (a.id == 'video-title' || a.id == 'video-title-link')
+            && !a.className.includes("ytd-video-preview") && alreadyChanged.indexOf(a) == -1;
         } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
-            return a.id == 'video-title'
+            return (a.id == 'video-title' || a.id == 'video-title-link')
             && !a.className.includes("-radio-")
             && !a.className.includes("-playlist-")
             && alreadyChanged.indexOf(a) == -1;
         } );
         links = links.concat(spans).slice(0,30);
 
-         // MAIN VIDEO DESCRIPTION - request to load original video description
+        // MAIN VIDEO DESCRIPTION - request to load original video description
         var mainVidID = "";
         if (!changedDescription && window.location.href.includes ("/watch")){
             mainVidID = window.location.href.split('v=')[1].split('&')[0];
@@ -117,17 +106,23 @@
                     if(data.kind == "youtube#videoListResponse")
                     {
                         API_KEY_VALID = true;
-
                         data = data.items;
-
-                        if (mainVidID != "")
-                        { // Replace Main Video Description
+                        if (mainVidID != "") {
+                            // MAIN TITLE
+                            var nativeTitle = data[0].snippet.title;
+                            document.title = nativeTitle + " - YouTube";
+                            var pageTitle = document.getElementsByClassName("title style-scope ytd-video-primary-info-renderer");
+                            if (pageTitle.length > 0 && pageTitle[0] !== undefined && nativeTitle != null && pageTitle[0].innerText != nativeTitle) {
+                                    console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + nativeTitle + "'");
+                                    pageTitle[0].innerText = nativeTitle;
+                            }
+                            // Replace Main Video Description
                             var videoDescription = data[0].snippet.description;
                             var pageDescription = document.getElementsByClassName("content style-scope ytd-video-secondary-info-renderer");
-                            if (pageDescription.length > 0 && videoDescription != null && pageDescription[0] !== undefined) {
+                            if (pageDescription.length > 1 && videoDescription != null && pageDescription[1] !== undefined) {
                                 // linkify replaces links correctly, but without redirect or other specific youtube stuff (no problem if missing)
                                 // Still critical, since it replaces ALL descriptions, even if it was not translated in the first place (no easy comparision possible)
-                                pageDescription[0].innerHTML = linkify(videoDescription);
+                                pageDescription[1].innerHTML = linkify(videoDescription);
                                 console.log ("Reverting main video description!");
                                 changedDescription = true;
                             }
