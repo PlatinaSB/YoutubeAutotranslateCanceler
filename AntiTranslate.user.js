@@ -37,6 +37,7 @@
 
     var currentLocation; // String: Current page URL
     var changedDescription; // Bool: Changed description
+    var pageDescTrigger = false;
 
     function getVideoID(a)
     {
@@ -66,7 +67,7 @@
         // REFERENCED VIDEO TITLES - find video link elements in the page that have not yet been changed
         var links = Array.prototype.slice.call(document.getElementsByTagName("yt-formatted-string")).filter( a => {
             return (a.id == 'video-title' || a.id == 'video-title-link')
-            && !a.className.includes("ytd-video-preview") && cachedTitles[getVideoID(a)] !== a.innerText.trim();
+            && !a.className.includes("ytd-video-preview") && !a.className.includes("ytd-ad-inline-playback-meta-block") && cachedTitles[getVideoID(a)] !== a.innerText.trim();
         } );
         var spans = Array.prototype.slice.call(document.getElementsByTagName("span")).filter( a => {
             return (a.id == 'video-title' || a.id == 'video-title-link')
@@ -132,12 +133,16 @@
                             }
                             // Replace Main Video Description
                             var videoDescription = data[0].snippet.description;
-                            var pageDescription = document.getElementsByClassName("content style-scope ytd-video-secondary-info-renderer");
+                            var pageDescription = document.getElementsByClassName("yt-core-attributed-string yt-core-attributed-string--white-space-pre-wrap");
                             if (pageDescription.length > 1 && videoDescription != null && pageDescription[1] !== undefined) {
                                 // linkify replaces links correctly, but without redirect or other specific youtube stuff (no problem if missing)
                                 // Still critical, since it replaces ALL descriptions, even if it was not translated in the first place (no easy comparision possible)
-                                pageDescription[1].innerHTML = linkify(videoDescription);
-                                console.log ("Reverting main video description!");
+                                if (!pageDescTrigger) {
+                                    pageDescTrigger = true;
+                                    revertVideoDesc(videoDescription, pageDescription);
+                                    console.log("start interval revert desc")
+                                    setInterval(revertVideoDesc, 10000, videoDescription, pageDescription);
+                                }
                                 changedDescription = true;
                             }
                             else console.log ("Failed to find main video description!");
@@ -187,6 +192,11 @@
             xhr.send();
 
         }
+    }
+
+    function revertVideoDesc (videoDescription, pageDescription) {
+        pageDescription[1].innerHTML = linkify(videoDescription);
+        console.log ("Reverting main video description!");
     }
 
     function linkify(inputText) {
