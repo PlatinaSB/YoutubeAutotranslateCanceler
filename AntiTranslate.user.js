@@ -131,6 +131,12 @@
                                     console.log ("Reverting main video title '" + pageTitle[0].innerText + "' to '" + nativeMainTitle + "'");
                                     pageTitle[0].innerText = nativeMainTitle;
                             }
+                            // Very Crude Implementation for the title under video but its works
+                            var pageTitle2 = document.querySelector(".style-scope.ytd-watch-metadata #title yt-formatted-string");
+                            if (pageTitle2 !== null && pageTitle2.innerText !== nativeMainTitle) {
+                                console.log ("Reverting main video title '" + pageTitle2.innerText + "' to '"+ nativeMainTitle +"'");
+                                pageTitle2.innerText = nativeMainTitle;
+                            }
                             // Replace Main Video Description
                             var videoDescription = data[0].snippet.description;
                             var pageDescription = document.getElementsByClassName("yt-core-attributed-string yt-core-attributed-string--white-space-pre-wrap");
